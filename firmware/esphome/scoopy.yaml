@@ -64,6 +64,8 @@ esphome:
 
   # Start the red setup pulse once components have initialised.
   # If Wi-Fi is already connected, leave the LEDs off.
+  # Also, turn off bluetooth for the LD2410 for better security and to save power.
+  # Can be switched back on by the user if they wish.
   on_boot:
     priority: -100
     then:
@@ -76,6 +78,7 @@ esphome:
                 id: middle_led
                 brightness: 100%
                 effect: "Pulse Bright"
+      - switch.turn_off: ld2410_bluetooth
 
 
 # ============================================================
@@ -200,6 +203,16 @@ switch:
     turn_off_action:
       - esp32_ble_tracker.stop_scan:
 
+  # Surface the LD2410 Bluetooth control so it can be turned on or off by the end-user.
+  # Only should be on in order to update LD2410 firmware or to tune the sensor via bluetooth.
+  # If left on, anyone within range can upload a malicious LD2410 firmware to the sensor.
+  - platform: ld2410
+    bluetooth:
+      name: "LD2410 Bluetooth"
+      id: ld2410_bluetooth
+      icon: "mdi:bluetooth-connect"
+      entity_category: config
+      device_class: switch
 
 # Allows Scoopy to download firmware and update manifests
 # directly from the Nice Hat Thanks website.
