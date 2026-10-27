@@ -1,3 +1,4 @@
+---
 # ============================================================
 # Scoopy Node - Unified Firmware
 # ============================================================
@@ -35,12 +36,9 @@
 #   credentials and return Scoopy to setup mode.
 #
 # ============================================================
-
-
 # ============================================================
 # Device identity
 # ============================================================
-
 esphome:
   name: scoopy
   friendly_name: Scoopy
@@ -59,8 +57,8 @@ esphome:
   # ESPHome framework version and lets Home Assistant show the
   # Scoopy firmware release installed on the device.
   project:
-    name: "nicehatthanks.scoopy"
-    version: "1.0.0"
+    name: vhsdream.scoopy
+    version: 1.1.0
 
   # Start the red setup pulse once components have initialised.
   # If Wi-Fi is already connected, leave the LEDs off.
@@ -77,24 +75,18 @@ esphome:
             - light.turn_on:
                 id: middle_led
                 brightness: 100%
-                effect: "Pulse Bright"
+                effect: Pulse Bright
       - switch.turn_off: ld2410_bluetooth
-
-
 # ============================================================
 # ESP32-C3
 # ============================================================
-
 esp32:
   board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
-
-
 # ============================================================
 # Scoopy custom components
 # ============================================================
-
 # Override only ESPHome's captive_portal component so Scoopy
 # can use the branded setup page while retaining ESPHome's
 # normal Wi-Fi storage, DNS and captive-portal behaviour.
@@ -104,14 +96,10 @@ external_components:
       path: components
     components:
       - captive_portal
-
-
 # ============================================================
 # Logging / Home Assistant / OTA
 # ============================================================
-
 logger:
-
 api:
 
   # The ESP32-C3 is single-core, so Wi-Fi and BLE scanning
@@ -143,12 +131,9 @@ api:
               state_subscription_only: true
         then:
           - esp32_ble_tracker.stop_scan:
-
-
 # ============================================================
 # Bluetooth LE / Home Assistant Bluetooth Proxy
 # ============================================================
-
 # Use passive BLE scanning to minimise Wi-Fi/BLE contention on the
 # single-core ESP32-C3.
 #
@@ -161,8 +146,6 @@ esp32_ble_tracker:
   scan_parameters:
     active: false
     continuous: false
-
-
 # Forward nearby BLE devices to Home Assistant.
 #
 # active: true allows Home Assistant integrations to create proxied
@@ -175,7 +158,6 @@ esp32_ble_tracker:
 bluetooth_proxy:
   active: true
   connection_slots: 1
-
 # Customer-facing control for BLE scanning.
 #
 # The preference is stored in flash. A new Scoopy defaults to OFF,
@@ -184,13 +166,12 @@ bluetooth_proxy:
 # switch remains ON, so scanning resumes when Home Assistant reconnects.
 switch:
   - platform: template
-    name: "Bluetooth Proxy"
+    name: Bluetooth Proxy
     id: bluetooth_proxy_enabled
-    icon: "mdi:bluetooth"
+    icon: mdi:bluetooth
     entity_category: config
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
-
     turn_on_action:
       - if:
           condition:
@@ -199,7 +180,6 @@ switch:
           then:
             - esp32_ble_tracker.start_scan:
                 continuous: true
-
     turn_off_action:
       - esp32_ble_tracker.stop_scan:
 
@@ -208,38 +188,29 @@ switch:
   # If left on, anyone within range can upload a malicious LD2410 firmware to the sensor.
   - platform: ld2410
     bluetooth:
-      name: "LD2410 Bluetooth"
+      name: LD2410 Bluetooth
       id: ld2410_bluetooth
-      icon: "mdi:bluetooth-connect"
+      icon: mdi:bluetooth-connect
       entity_category: config
       device_class: switch
-
 # Allows Scoopy to download firmware and update manifests
 # directly from the Nice Hat Thanks website.
 http_request:
-
-
 # Keep native ESPHome OTA for development/local updates,
 # while also allowing customer-facing HTTP firmware updates.
 ota:
   - platform: esphome
-
   - platform: http_request
-
-
 # Managed firmware update entity exposed to Home Assistant.
 # Scoopy periodically checks this manifest for a newer release.
 update:
   - platform: http_request
-    name: "Firmware Update"
-    source: "https://nicehatthanks.com/firmware/scoopy/manifest.json"
+    name: Firmware Update
+    source: https://nicehatthanks.com/firmware/scoopy/manifest.json
     entity_category: diagnostic
-
-
 # ============================================================
 # Wi-Fi provisioning
 # ============================================================
-
 wifi:
   id: wifi_component
 
@@ -250,7 +221,7 @@ wifi:
   # Because no SSID is explicitly supplied here, ESPHome uses
   # the MAC-suffixed Scoopy device name.
   ap:
-    password: "scoopy123"
+    password: scoopy123
 
   # Once Wi-Fi successfully connects, stop the red setup pulse
   # and play a brief green success flash before leaving LEDs off.
@@ -266,67 +237,49 @@ wifi:
       - light.turn_on:
           id: middle_led
           brightness: 100%
-          effect: "Pulse Bright"
-
-
+          effect: Pulse Bright
 # Provides the first-time Wi-Fi setup page.
 captive_portal:
-
-
 # Also allows provisioning over USB serial using Improv.
 improv_serial:
-
-
 # ============================================================
 # Wi-Fi connected success animation
 # ============================================================
-
 # A short one-shot confirmation when Scoopy joins Wi-Fi:
 # both green LEDs fade up together, hold briefly, then fade out.
 # The script also stops any coordinated pattern and the red setup
 # pulse first so only the success indication owns the LEDs.
-
 script:
   - id: wifi_connected_success
     mode: restart
     then:
       - light.turn_off: led_pattern
-
       - light.turn_off:
           id: middle_led
           transition_length: 0s
-
       - light.turn_on:
           id: left_led
           brightness: 100%
           transition_length: 150ms
-
       - light.turn_on:
           id: right_led
           brightness: 100%
           transition_length: 150ms
-
       - delay: 250ms
-
       - light.turn_off:
           id: left_led
           transition_length: 350ms
-
       - light.turn_off:
           id: right_led
           transition_length: 350ms
-
-
 # ============================================================
 # LD2410C mmWave radar
 # ============================================================
-
 # UART is always enabled so one firmware image can support
 # both Scoopy Compact and Scoopy Presence.
 #
 # ESP TX -> LD2410 RX
 # ESP RX <- LD2410 TX
-
 uart:
   id: radar_uart
   tx_pin: GPIO1
@@ -334,47 +287,36 @@ uart:
   baud_rate: 256000
   parity: NONE
   stop_bits: 1
-
-
 ld2410:
   id: radar
   uart_id: radar_uart
-
-
 # ============================================================
 # I2C expansion
 # ============================================================
-
 # Generic I2C expansion bus.
 #
 # Users can add their own ESPHome-supported I2C
 # peripherals without modifying Scoopy hardware.
-
 i2c:
   id: scoopy_i2c
   sda: GPIO5
   scl: GPIO7
   scan: true
-
-
 # ============================================================
 # LD2410C distance sensors
 # ============================================================
-
 sensor:
-
-
-#   # LD2410 distance sensors are intentionally disabled by default.
-#   # These values update frequently and can create a large amount of
-#   # unnecessary Home Assistant Recorder/history data over time.
-#   # Uncomment this block if live presence distance data is required.
+#  # LD2410 distance sensors are intentionally disabled by default.
+#  # These values update frequently and can create a large amount of
+#  # unnecessary Home Assistant Recorder/history data over time.
+#  # Uncomment this block if live presence distance data is required.
 
 #   - platform: ld2410
 #     ld2410_id: radar
 
-#     # Distance entities can change frequently, so publish them
-#     # at most once every five seconds to reduce unnecessary
-#     # Home Assistant Recorder/history traffic.
+#  # Distance entities can change frequently, so publish them
+#  # at most once every five seconds to reduce unnecessary
+#  # Home Assistant Recorder/history traffic.
 
 #     detection_distance:
 #       name: "Presence Distance"
@@ -391,7 +333,6 @@ sensor:
 #       filters:
 #         - throttle: 2s
 
-
   # ----------------------------------------------------------
   # Diagnostics
   # ----------------------------------------------------------
@@ -399,7 +340,7 @@ sensor:
   # Raw Wi-Fi RSSI in dBm. ESPHome only reports a valid value
   # while connected in station mode.
   - platform: wifi_signal
-    name: "Wi-Fi Signal"
+    name: Wi-Fi Signal
     id: wifi_signal_db
     update_interval: 60s
     entity_category: diagnostic
@@ -407,68 +348,59 @@ sensor:
   # Friendlier 0-100% representation of the same RSSI value.
   - platform: copy
     source_id: wifi_signal_db
-    name: "Wi-Fi Signal Percent"
+    name: Wi-Fi Signal Percent
     filters:
       - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
-    unit_of_measurement: "%"
+    unit_of_measurement: '%'
     entity_category: diagnostic
-    device_class: ""
+    device_class: ''
 
   # Device uptime in seconds. Home Assistant treats this as a
   # diagnostic entity rather than a normal room-control sensor.
   - platform: uptime
-    name: "Uptime"
+    name: Uptime
     type: seconds
     update_interval: 60s
     entity_category: diagnostic
-
-
 # ============================================================
 # Diagnostic text sensors
 # ============================================================
-
 text_sensor:
 
   # Current IP address assigned by the customer's network.
   - platform: wifi_info
     ip_address:
-      name: "IP Address"
+      name: IP Address
       entity_category: diagnostic
 
   # ESPHome framework version the firmware was compiled with.
   - platform: version
-    name: "ESPHome Version"
+    name: ESPHome Version
     hide_timestamp: true
     hide_hash: true
     entity_category: diagnostic
 
   # Scoopy product firmware version, independent of ESPHome.
   - platform: template
-    name: "Scoopy Firmware"
+    name: Scoopy Firmware
     id: scoopy_firmware_version
-    icon: "mdi:information-outline"
+    icon: mdi:information-outline
     entity_category: diagnostic
     update_interval: 600s
     lambda: |-
       return { ESPHOME_PROJECT_VERSION };
-
-
 # ============================================================
 # LED PWM outputs
 # ============================================================
-
 # All three LEDs use ESP32 LEDC PWM so Home Assistant can set
 # brightness as well as effects.
-
 output:
   - platform: ledc
     pin: GPIO4
     id: left_led_output
-
   - platform: ledc
     pin: GPIO6
     id: middle_led_output
-
   - platform: ledc
     pin: GPIO10
     id: right_led_output
@@ -485,20 +417,16 @@ output:
           id(left_led_output).set_level(state);
           id(middle_led_output).set_level(state);
           id(right_led_output).set_level(state);
-
-
 # ============================================================
 # Home Assistant LED entities
 # ============================================================
-
 light:
 
   # ----------------------------------------------------------
   # Coordinated three-LED patterns
   # ----------------------------------------------------------
-
   - platform: monochromatic
-    name: "LED Pattern"
+    name: LED Pattern
     id: led_pattern
     output: led_pattern_output
     restore_mode: ALWAYS_OFF
@@ -520,17 +448,14 @@ light:
       - light.turn_off:
           id: right_led
           transition_length: 0s
-
     effects:
       - lambda:
-          name: "Circular Pulse"
+          name: Circular Pulse
           update_interval: 33ms
           lambda: |-
             static uint32_t started_ms = 0;
-
             if (initial_run) {
               started_ms = millis();
-
               // The pattern takes ownership of the three LEDs.
               // Keep the individual HA LED entities in a clean OFF
               // state while the pattern drives the raw PWM outputs.
@@ -538,56 +463,42 @@ light:
               id(middle_led).turn_off().set_transition_length(0).perform();
               id(right_led).turn_off().set_transition_length(0).perform();
             }
-
             constexpr float CYCLE_MS = 1800.0f;
-
             const float elapsed_ms = static_cast<float>(millis() - started_ms);
             const float phase = fmodf(elapsed_ms / CYCLE_MS, 1.0f);
-
             // The LED Pattern light's HA brightness slider controls
             // the peak brightness of the whole animation.
             const float peak = it.current_values.get_brightness();
-
             auto pulse = [](float p) -> float {
               constexpr float TWO_PI_LOCAL = 6.28318530718f;
               float wave = 0.5f + 0.5f * cosf(TWO_PI_LOCAL * p);
-
               // Squaring narrows the pulse while keeping the motion
               // smooth, giving a clear left -> middle -> right chase.
               return wave * wave;
             };
-
             const float left = peak * pulse(phase);
             const float middle = peak * pulse(phase - (1.0f / 3.0f));
             const float right = peak * pulse(phase - (2.0f / 3.0f));
-
             id(left_led_output).set_level(left);
             id(middle_led_output).set_level(middle);
             id(right_led_output).set_level(right);
-
-
       - lambda:
-          name: "Comet"
+          name: Comet
           update_interval: 33ms
           lambda: |-
             static uint32_t started_ms = 0;
-
             if (initial_run) {
               started_ms = millis();
-
               id(left_led).turn_off().set_transition_length(0).perform();
               id(middle_led).turn_off().set_transition_length(0).perform();
               id(right_led).turn_off().set_transition_length(0).perform();
             }
-
             constexpr float CYCLE_MS = 1500.0f;
             constexpr float PI_LOCAL = 3.14159265359f;
             constexpr float TAIL = 0.22f;
-
             const float elapsed_ms = static_cast<float>(millis() - started_ms);
             const float phase = fmodf(elapsed_ms / CYCLE_MS, 1.0f);
             const float peak = it.current_values.get_brightness();
-
             // Move a bright "head" through the three LEDs while the
             // previous LED fades away as a short tail.
             const float position = phase * 3.0f;
@@ -595,125 +506,94 @@ light:
             const int next = (current + 1) % 3;
             const int previous = (current + 2) % 3;
             const float fraction = position - floorf(position);
-
             // Cosine easing keeps the transfer between LEDs smooth.
             const float eased = 0.5f - 0.5f * cosf(PI_LOCAL * fraction);
-
             float levels[3] = {0.0f, 0.0f, 0.0f};
             levels[current] = TAIL + (1.0f - TAIL) * (1.0f - eased);
             levels[next] = eased;
             levels[previous] = TAIL * (1.0f - eased);
-
             id(left_led_output).set_level(peak * levels[0]);
             id(middle_led_output).set_level(peak * levels[1]);
             id(right_led_output).set_level(peak * levels[2]);
-
-
       - lambda:
-          name: "Breathe All"
+          name: Breathe All
           update_interval: 33ms
           lambda: |-
             static uint32_t started_ms = 0;
-
             if (initial_run) {
               started_ms = millis();
-
               id(left_led).turn_off().set_transition_length(0).perform();
               id(middle_led).turn_off().set_transition_length(0).perform();
               id(right_led).turn_off().set_transition_length(0).perform();
             }
-
             constexpr float CYCLE_MS = 3000.0f;
             constexpr float TWO_PI_LOCAL = 6.28318530718f;
             constexpr float MIN_LEVEL = 0.06f;
-
             const float elapsed_ms = static_cast<float>(millis() - started_ms);
             const float phase = fmodf(elapsed_ms / CYCLE_MS, 1.0f);
             const float peak = it.current_values.get_brightness();
-
             // Smoothly breathe all three LEDs together without quite
             // reaching zero, so the animation remains visibly alive.
             const float wave = 0.5f - 0.5f * cosf(TWO_PI_LOCAL * phase);
             const float level = peak * (MIN_LEVEL + (1.0f - MIN_LEVEL) * wave);
-
             id(left_led_output).set_level(level);
             id(middle_led_output).set_level(level);
             id(right_led_output).set_level(level);
-
-
       - lambda:
-          name: "Heartbeat"
+          name: Heartbeat
           update_interval: 25ms
           lambda: |-
             static uint32_t started_ms = 0;
-
             if (initial_run) {
               started_ms = millis();
-
               id(left_led).turn_off().set_transition_length(0).perform();
               id(middle_led).turn_off().set_transition_length(0).perform();
               id(right_led).turn_off().set_transition_length(0).perform();
             }
-
             constexpr float CYCLE_MS = 1500.0f;
             constexpr float PI_LOCAL = 3.14159265359f;
-
             const float elapsed_ms = static_cast<float>(millis() - started_ms);
             const float phase = fmodf(elapsed_ms / CYCLE_MS, 1.0f);
             const float peak = it.current_values.get_brightness();
-
             auto beat = [](float p, float centre, float half_width) -> float {
               constexpr float PI_BEAT = 3.14159265359f;
               const float distance = fabsf(p - centre);
-
               if (distance >= half_width)
                 return 0.0f;
-
               const float x = distance / half_width;
               return 0.5f + 0.5f * cosf(PI_BEAT * x);
             };
-
             // A strong first beat followed quickly by a slightly
             // softer second beat, then a longer pause.
             const float first = beat(phase, 0.11f, 0.075f);
             const float second = 0.78f * beat(phase, 0.29f, 0.065f);
             const float level = peak * fmaxf(first, second);
-
             id(left_led_output).set_level(level);
             id(middle_led_output).set_level(level);
             id(right_led_output).set_level(level);
-
-
       - lambda:
-          name: "Ping Pong"
+          name: Ping Pong
           update_interval: 33ms
           lambda: |-
             static uint32_t started_ms = 0;
-
             if (initial_run) {
               started_ms = millis();
-
               id(left_led).turn_off().set_transition_length(0).perform();
               id(middle_led).turn_off().set_transition_length(0).perform();
               id(right_led).turn_off().set_transition_length(0).perform();
             }
-
             constexpr float CYCLE_MS = 1800.0f;
             constexpr float PI_LOCAL = 3.14159265359f;
-
             const float elapsed_ms = static_cast<float>(millis() - started_ms);
             const float phase = fmodf(elapsed_ms / CYCLE_MS, 1.0f);
             const float peak = it.current_values.get_brightness();
-
             // Triangle-wave position: 0 -> 2 -> 0 gives a smooth
             // left -> red -> right -> red -> left bounce.
             const float position =
                 phase < 0.5f ? phase * 4.0f : (1.0f - phase) * 4.0f;
-
             float left = 0.0f;
             float middle = 0.0f;
             float right = 0.0f;
-
             if (position <= 1.0f) {
               const float eased = 0.5f - 0.5f * cosf(PI_LOCAL * position);
               left = 1.0f - eased;
@@ -724,61 +604,46 @@ light:
               middle = 1.0f - eased;
               right = eased;
             }
-
             id(left_led_output).set_level(peak * left);
             id(middle_led_output).set_level(peak * middle);
             id(right_led_output).set_level(peak * right);
-
-
       - lambda:
-          name: "Ripple"
+          name: Ripple
           update_interval: 33ms
           lambda: |-
             static uint32_t started_ms = 0;
-
             if (initial_run) {
               started_ms = millis();
-
               id(left_led).turn_off().set_transition_length(0).perform();
               id(middle_led).turn_off().set_transition_length(0).perform();
               id(right_led).turn_off().set_transition_length(0).perform();
             }
-
             constexpr float CYCLE_MS = 1800.0f;
-
             const float elapsed_ms = static_cast<float>(millis() - started_ms);
             const float phase = fmodf(elapsed_ms / CYCLE_MS, 1.0f);
             const float peak = it.current_values.get_brightness();
-
             auto ripple_pulse = [](float p, float centre, float half_width) -> float {
               constexpr float PI_RIPPLE = 3.14159265359f;
-
               float distance = fabsf(p - centre);
               distance = fminf(distance, 1.0f - distance);
-
               if (distance >= half_width)
                 return 0.0f;
-
               const float x = distance / half_width;
               return 0.5f + 0.5f * cosf(PI_RIPPLE * x);
             };
-
             // The centre red LED blooms first, then the pulse expands
             // outward into both green LEDs before fading away.
             const float middle = peak * ripple_pulse(phase, 0.20f, 0.18f);
             const float outer = peak * ripple_pulse(phase, 0.55f, 0.25f);
-
             id(left_led_output).set_level(outer);
             id(middle_led_output).set_level(middle);
             id(right_led_output).set_level(outer);
 
-
   # ----------------------------------------------------------
   # Left green LED
   # ----------------------------------------------------------
-
   - platform: monochromatic
-    name: "Left LED"
+    name: Left LED
     id: left_led
     output: left_led_output
     restore_mode: ALWAYS_OFF
@@ -796,65 +661,57 @@ light:
             - light.turn_off:
                 id: led_pattern
                 transition_length: 0s
-
     effects:
       - pulse:
-          name: "Pulse Dim"
+          name: Pulse Dim
           transition_length: 1s
           update_interval: 1s
           min_brightness: 5%
           max_brightness: 25%
-
       - pulse:
-          name: "Pulse Mid"
+          name: Pulse Mid
           transition_length: 1s
           update_interval: 1s
           min_brightness: 8%
           max_brightness: 60%
-
       - pulse:
-          name: "Pulse Bright"
+          name: Pulse Bright
           transition_length: 1s
           update_interval: 1s
           min_brightness: 10%
           max_brightness: 100%
-
       - strobe:
-          name: "Flash Dim"
+          name: Flash Dim
           colors:
             - state: true
               brightness: 25%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Flash Mid"
+          name: Flash Mid
           colors:
             - state: true
               brightness: 60%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Flash Bright"
+          name: Flash Bright
           colors:
             - state: true
               brightness: 100%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Alert"
+          name: Alert
           colors:
             - state: true
               brightness: 100%
               duration: 150ms
             - state: false
               duration: 150ms
-
 
   # ----------------------------------------------------------
   # Middle red LED
@@ -862,9 +719,8 @@ light:
   # This LED doubles as Scoopy's setup/recovery indicator.
   # Once Wi-Fi is connected, it behaves as a normal HA light.
   # ----------------------------------------------------------
-
   - platform: monochromatic
-    name: "Middle LED"
+    name: Middle LED
     id: middle_led
     output: middle_led_output
     restore_mode: ALWAYS_OFF
@@ -882,72 +738,63 @@ light:
             - light.turn_off:
                 id: led_pattern
                 transition_length: 0s
-
     effects:
       - pulse:
-          name: "Pulse Dim"
+          name: Pulse Dim
           transition_length: 1s
           update_interval: 1s
           min_brightness: 5%
           max_brightness: 25%
-
       - pulse:
-          name: "Pulse Mid"
+          name: Pulse Mid
           transition_length: 1s
           update_interval: 1s
           min_brightness: 8%
           max_brightness: 60%
-
       - pulse:
-          name: "Pulse Bright"
+          name: Pulse Bright
           transition_length: 1s
           update_interval: 1s
           min_brightness: 10%
           max_brightness: 100%
-
       - strobe:
-          name: "Flash Dim"
+          name: Flash Dim
           colors:
             - state: true
               brightness: 25%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Flash Mid"
+          name: Flash Mid
           colors:
             - state: true
               brightness: 60%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Flash Bright"
+          name: Flash Bright
           colors:
             - state: true
               brightness: 100%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Alert"
+          name: Alert
           colors:
             - state: true
               brightness: 100%
               duration: 150ms
             - state: false
               duration: 150ms
-
 
   # ----------------------------------------------------------
   # Right green LED
   # ----------------------------------------------------------
-
   - platform: monochromatic
-    name: "Right LED"
+    name: Right LED
     id: right_led
     output: right_led_output
     restore_mode: ALWAYS_OFF
@@ -965,85 +812,71 @@ light:
             - light.turn_off:
                 id: led_pattern
                 transition_length: 0s
-
     effects:
       - pulse:
-          name: "Pulse Dim"
+          name: Pulse Dim
           transition_length: 1s
           update_interval: 1s
           min_brightness: 5%
           max_brightness: 25%
-
       - pulse:
-          name: "Pulse Mid"
+          name: Pulse Mid
           transition_length: 1s
           update_interval: 1s
           min_brightness: 8%
           max_brightness: 60%
-
       - pulse:
-          name: "Pulse Bright"
+          name: Pulse Bright
           transition_length: 1s
           update_interval: 1s
           min_brightness: 10%
           max_brightness: 100%
-
       - strobe:
-          name: "Flash Dim"
+          name: Flash Dim
           colors:
             - state: true
               brightness: 25%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Flash Mid"
+          name: Flash Mid
           colors:
             - state: true
               brightness: 60%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Flash Bright"
+          name: Flash Bright
           colors:
             - state: true
               brightness: 100%
               duration: 500ms
             - state: false
               duration: 500ms
-
       - strobe:
-          name: "Alert"
+          name: Alert
           colors:
             - state: true
               brightness: 100%
               duration: 150ms
             - state: false
               duration: 150ms
-
-
 # ============================================================
 # Factory reset
 # ============================================================
-
 # Internal ESPHome factory-reset control.
 #
 # It is deliberately hidden from Home Assistant and only
 # invoked by the physical two-button recovery gesture.
-
 button:
   - platform: factory_reset
     id: factory_reset_button
     internal: true
-
-
 # ============================================================
 # Internal state used for factory reset indication
 # ============================================================
-
 globals:
 
   # The reset logic runs every 250 ms.
@@ -1051,14 +884,11 @@ globals:
   # 40 * 250 ms = 10 seconds.
   - id: factory_reset_hold_count
     type: int
-    restore_value: no
-    initial_value: "0"
-
-
+    restore_value: false
+    initial_value: '0'
 # ============================================================
 # Wi-Fi LED pattern + factory reset monitor
 # ============================================================
-
 interval:
   - interval: 250ms
     then:
@@ -1066,21 +896,17 @@ interval:
       # ------------------------------------------------------
       # Track simultaneous button hold
       # ------------------------------------------------------
-
       - if:
           condition:
             and:
               - binary_sensor.is_on: button_1
               - binary_sensor.is_on: button_2
-
           then:
             - lambda: |-
                 id(factory_reset_hold_count)++;
-
           else:
             - lambda: |-
                 id(factory_reset_hold_count) = 0;
-
 
       # ------------------------------------------------------
       # Factory reset warning LED
@@ -1088,22 +914,18 @@ interval:
 
       # During the final three seconds of the reset gesture,
       # temporarily override the normal middle LED behaviour.
-
       - if:
           condition:
             lambda: |-
               return id(factory_reset_hold_count) >= 36;
-
           then:
             # 9-10 seconds: very fast warning blink.
             - light.toggle: middle_led
-
           else:
             - if:
                 condition:
                   lambda: |-
                     return id(factory_reset_hold_count) >= 28;
-
                 then:
                   # Entering the reset warning phase: stop the
                   # normal Wi-Fi pulse before manually blinking red.
@@ -1112,7 +934,6 @@ interval:
                         lambda: |-
                           return id(factory_reset_hold_count) == 28 &&
                                  id(middle_led).current_values.is_on();
-
                       then:
                         - light.turn_off: middle_led
 
@@ -1120,7 +941,6 @@ interval:
                   - lambda: |-
                       static bool reset_fast_toggle = false;
                       reset_fast_toggle = !reset_fast_toggle;
-
                       if (reset_fast_toggle) {
                         if (id(middle_led).current_values.is_on()) {
                           id(middle_led).turn_off().perform();
@@ -1128,7 +948,6 @@ interval:
                           id(middle_led).turn_on().perform();
                         }
                       }
-
                 else:
 
                   # ------------------------------------------------
@@ -1142,41 +961,32 @@ interval:
                       condition:
                         not:
                           wifi.connected:
-
                       then:
                         - if:
                             condition:
                               lambda: |-
                                 return !id(middle_led).current_values.is_on();
-
                             then:
                               - light.turn_on:
                                   id: middle_led
                                   brightness: 100%
-                                  effect: "Pulse Bright"
-
+                                  effect: Pulse Bright
 
       # ------------------------------------------------------
       # Factory reset after 10 seconds
       # ------------------------------------------------------
-
       - if:
           condition:
             lambda: |-
               return id(factory_reset_hold_count) >= 40;
-
           then:
             - logger.log:
                 level: WARN
-                format: "Factory reset requested - both buttons held for 10 seconds"
-
+                format: Factory reset requested - both buttons held for 10 seconds
             - button.press: factory_reset_button
-
-
 # ============================================================
 # Home Assistant button events
 # ============================================================
-
 # The physical GPIO states are hidden from Home Assistant.
 #
 # Customers instead see clean Button 1 / Button 2 event
@@ -1185,31 +995,23 @@ interval:
 #   single
 #   double
 #   hold
-
 event:
   - platform: template
-    name: "Button 1"
+    name: Button 1
     id: button_1_event
     device_class: button
-    event_types:
-      - single
-      - double
-      - hold
-
+    event_types: [single, double, hold]
   - platform: template
-    name: "Button 2"
+    name: Button 2
     id: button_2_event
     device_class: button
     event_types:
       - single
       - double
       - hold
-
-
 # ============================================================
 # Physical buttons + presence
 # ============================================================
-
 binary_sensor:
 
   # ----------------------------------------------------------
@@ -1220,38 +1022,29 @@ binary_sensor:
   #
   # Home Assistant automations therefore receive presence
   # changes immediately.
-
   - platform: ld2410
     ld2410_id: radar
-
     has_target:
-      name: "Presence"
-
+      name: Presence
     has_moving_target:
-      name: "Moving Target"
-
+      name: Moving Target
     has_still_target:
-      name: "Still Target"
-
+      name: Still Target
 
   # ----------------------------------------------------------
   # Button 1 - GPIO2
   # ----------------------------------------------------------
-
   - platform: gpio
     id: button_1
     internal: true
-
     pin:
       number: GPIO2
       mode:
         input: true
         pullup: true
       inverted: true
-
     filters:
       - delayed_on_off: 20ms
-
     on_multi_click:
 
       # Double press.
@@ -1260,61 +1053,47 @@ binary_sensor:
           - OFF for at most 400ms
           - ON for at most 500ms
           - OFF for at least 200ms
-
         then:
           - event.trigger:
               id: button_1_event
               event_type: double
-
 
       # Hold.
       #
       # If Button 2 is also held, suppress the normal HA hold
       # event because the user may be performing a factory
       # reset gesture instead.
-      - timing:
-          - ON for at least 800ms
-
+      - timing: [ON for at least 800ms]
         then:
           - if:
               condition:
                 binary_sensor.is_off: button_2
-
               then:
                 - event.trigger:
                     id: button_1_event
                     event_type: hold
 
-
       # Single press.
-      - timing:
-          - ON for at most 500ms
-          - OFF for at least 450ms
-
+      - timing: [ON for at most 500ms, OFF for at least 450ms]
         then:
           - event.trigger:
               id: button_1_event
               event_type: single
 
-
   # ----------------------------------------------------------
   # Button 2 - GPIO3
   # ----------------------------------------------------------
-
   - platform: gpio
     id: button_2
     internal: true
-
     pin:
       number: GPIO3
       mode:
         input: true
         pullup: true
       inverted: true
-
     filters:
       - delayed_on_off: 20ms
-
     on_multi_click:
 
       # Double press.
@@ -1323,36 +1102,27 @@ binary_sensor:
           - OFF for at most 400ms
           - ON for at most 500ms
           - OFF for at least 200ms
-
         then:
           - event.trigger:
               id: button_2_event
               event_type: double
 
-
       # Hold.
       #
       # Suppressed when Button 1 is also being held for the
       # factory-reset gesture.
-      - timing:
-          - ON for at least 800ms
-
+      - timing: [ON for at least 800ms]
         then:
           - if:
               condition:
                 binary_sensor.is_off: button_1
-
               then:
                 - event.trigger:
                     id: button_2_event
                     event_type: hold
 
-
       # Single press.
-      - timing:
-          - ON for at most 500ms
-          - OFF for at least 450ms
-
+      - timing: [ON for at most 500ms, OFF for at least 450ms]
         then:
           - event.trigger:
               id: button_2_event
